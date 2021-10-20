@@ -1,0 +1,53 @@
+{
+    "Cargo Owners": [
+        "{\"username\": \"CargoOwner1\", \"password\": \"CargoOwnerPass1\", \"personType\": \"Cargo Owner\"}"
+    ],
+    "Drivers": [
+        "{\"username\": \"DriverUser1\", \"password\": \"DriverPass1\", \"personType\": \"Driver\", \"lorryDetails\": \"DriverDetails1\", \"driverDetails\": \"LorryDetails1\", \"company\": \"EON\"}"
+    ],
+    "Transport Company": [
+        "{\"username\": \"TCuser1\", \"password\": \"TCpass1\", \"personType\": \"Transport Company\", \"orderList\": []}",
+        "{\"username\": \"EON\", \"password\": \"password123\", \"personType\": \"Transport Company\", \"orderList\": []}",
+        {
+            "username": "EON",
+            "password": "password123",
+            "personType": "Transport Company",
+            "orderList": [
+                1
+            ]
+        }
+    ],
+    "Orders": [
+        "{\"start\": \"Start1\", \"end\": \"End1\", \"miles\": 1, \"weight\": 1, \"orderID\": 1}"
+    ]
+}{
+    "Cargo Owners": [
+        "{\"username\": \"CargoOwner1\", \"password\": \"CargoOwnerPass1\", \"personType\": \"Cargo Owner\"}"
+    ],
+    "Drivers": [
+        "{\"username\": \"DriverUser1\", \"password\": \"DriverPass1\", \"personType\": \"Driver\", \"lorryDetails\": \"DriverDetails1\", \"driverDetails\": \"LorryDetails1\", \"company\": \"EON\"}"
+    ],
+    "Transport Company": [
+        "{\"username\": \"TCuser1\", \"password\": \"TCpass1\", \"personType\": \"Transport Company\", \"orderList\": []}",
+        "{\"username\": \"EON\", \"password\": \"password123\", \"personType\": \"Transport Company\", \"orderList\": []}",
+        {
+            "username": "EON",
+            "password": "password123",
+            "personType": "Transport Company",
+            "orderList": [
+                1
+            ]
+        },
+        {
+            "username": "EON",
+            "password": "password123",
+            "personType": "Transport Company",
+            "orderList": [
+                1
+            ]
+        }
+    ],
+    "Orders": [
+        "{\"start\": \"Start1\", \"end\": \"End1\", \"miles\": 1, \"weight\": 1, \"orderID\": 1}"
+    ]
+}
