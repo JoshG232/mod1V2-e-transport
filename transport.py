@@ -1,9 +1,13 @@
-import sqlite3
+"""Importing splite3 and creating the database"""
+import sqlite3 
 conn = sqlite3.connect("database.db")
-c = conn.cursor()
+c = conn.cursor() #Creating the cursor so that processes can be carried out
+
 from objects import CargoOwner, Driver, TransportCompany, Order
 
-
+"""Function to create the tables for the database
+   if the tables have already been created the 
+   the function wont be called if there is already tables """
 def createTables():
     c.execute(""" CREATE TABLE cargoOwner (
         username text,
@@ -39,6 +43,9 @@ def createTables():
     )
     """)
 
+"""After the user selects what type of user they are
+   they are asked to login or register. Depending on
+   on what they selected will be what function is run"""
 def loginOrRegister(typeChoice):
     print("""
         1:Login
@@ -55,6 +62,9 @@ def loginOrRegister(typeChoice):
         if typeChoice == 3:
             registerTransportCompany()
  
+"""The user is asked for the username and password and checked
+   if it is in the database and if they make up so the user can
+   continue"""
 def login(typeChoice):
     print("Login")
     username = input("Enter username: ")
@@ -95,6 +105,8 @@ def login(typeChoice):
                 print("Password incorrect try again")
                 login(typeChoice)
 
+"""Registering the cargo owner with inputted data values from the
+   user"""
 def registerCargoOwner():
     print("registerCargoOwner")
     username = input("Enter username: ")
@@ -104,6 +116,8 @@ def registerCargoOwner():
     conn.commit()
     conn.close()
 
+"""Registering the driver with inputted data values from the
+   user"""
 def registerDriver():
     print("registerDriver")
     username = input("Enter username: ")
@@ -116,6 +130,8 @@ def registerDriver():
     conn.commit()
     conn.close()
 
+"""Registering the transport company with inputted data values from the
+   user"""
 def registerTransportCompany():
     print("registerTransportCompany")
     username = input("Enter username: ")
@@ -124,7 +140,10 @@ def registerTransportCompany():
     c.execute('INSERT INTO transportCompany VALUES (:username,:password,:personType,:orderList)',{"username":tempObj.username,"password":tempObj.password,"personType":tempObj.personType,"orderList":tempObj.orderList})
     conn.commit()
     conn.close()
- 
+
+"""The main functionality for the cargo owner is done in this function
+   so calculating the shipping price and sending the cargo to a transport
+   company"""
 def mainCargoOwner():
     print("mainCargoOwner")
     print("""
@@ -155,9 +174,13 @@ def mainCargoOwner():
         conn.commit()
         conn.close()
 
+"""The main driver functionality"""
 def mainDriver():
     print("mainDriver")
 
+"""The main transport company functionality is done in this function. This would
+   be viewing orders for there drives(orders they have selected) and then viewing
+   available orders that have been sent by cargo owners """
 def mainTransportCompany():
     print("mainTransportCompany")
     print("""
@@ -179,6 +202,8 @@ def mainTransportCompany():
         orderSelect = int(input("Select orderID : "))
         acceptingOrder(orderSelect)
 
+"""Once an order has been selected it needs to be updated in the database
+   This function is where it is updated"""
 def acceptingOrder(orderSelect):
     print("acceptingORder")
     username = input("Enter company name: ")
@@ -191,9 +216,7 @@ def acceptingOrder(orderSelect):
             c.execute("""UPDATE transportCompany SET orderList = :orderList
                     WHERE username = :username""",
                     {'username':username,'orderList':listOfOrders}
-            
             )
-
     else:
         print("Here")
         valueOrder = listOfOrders[0] + str(orderSelect)
@@ -210,10 +233,9 @@ def acceptingOrder(orderSelect):
                     {'orderID':orderSelect,'accepted':"True"}
             
             )
-        
 
-    
-        
+"""Main function to start the program and find out what type of 
+   user they are"""               
 def main():
     print("""
         Select type of user
@@ -235,16 +257,7 @@ def main():
 main()
 # mainTransportCompany()
 
-# username = "JoshTransportCompany"
 
-
-# listOfOrders = "2"
-# with conn:
-#         c.execute("""UPDATE transportCompany SET orderList = :orderList
-#                 WHERE username = :username""",
-#                 {'username':username,'orderList':listOfOrders}
-        
-#         )
 
 
 
