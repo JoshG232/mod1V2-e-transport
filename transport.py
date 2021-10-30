@@ -170,7 +170,7 @@ def mainCargoOwner():
         miles = int(input("How many miles: "))
         orderID = int(input("OrderID: "))
         tempObj = Order(start,end,miles,weight,orderID)
-        c.execute('INSERT INTO orders VALUES (:start,:end,:miles,:weight,:orderID,:accepted)',{"start":tempObj.start,"end":tempObj.end,"miles":tempObj.miles,"weight":tempObj.weight,"orderID":tempObj.orderID,"accepted":tempObj.accepted})
+        c.execute('INSERT INTO orders VALUES (:start,:end,:miles,:weight,:orderID,:accepted,:driverAccepted)',{"start":tempObj.start,"end":tempObj.end,"miles":tempObj.miles,"weight":tempObj.weight,"orderID":tempObj.orderID,"accepted":tempObj.accepted,"driverAccepted":tempObj.driverAccepted})
         conn.commit()
         conn.close()
 
@@ -183,7 +183,6 @@ def mainDriver():
     """)
     choice = int(input("Enter selection: "))
     if choice == 1:
-        print("d")
         company = input("What company do you work for ")
         c.execute('SELECT orderList FROM transportCompany WHERE username=:username', {"username":company})
         array = c.fetchall()
@@ -201,35 +200,44 @@ def mainDriver():
             print("Exit")
         else:
             print("else")
-            username = input("Enter company name: ")
-            c.execute('SELECT orderList FROM transportCompany WHERE username=:username', {"username":username})
+            username = input("Enter username: ")
+            c.execute('SELECT orderListDriver FROM driver WHERE username=:username', {"username":username})
             listOfOrders = c.fetchone()
             print(listOfOrders)
             if listOfOrders == None:
-                listOfOrders = orderSelect
+                listOfOrders = selection
                 with conn:
-                    c.execute("""UPDATE transportCompany SET orderList = :orderList
+                    c.execute("""UPDATE driver SET orderListDriver = :orderListDriver
                             WHERE username = :username""",
-                            {'username':username,'orderList':listOfOrders}
+                            {'username':username,'orderListDriver':listOfOrders}
                     )
             else:
                 print("Here")
-                valueOrder = listOfOrders[0] + str(orderSelect)
+                valueOrder = listOfOrders[0] + str(selection)
                 with conn:
-                    c.execute("""UPDATE transportCompany SET orderList = :orderList
+                    c.execute("""UPDATE driver SET orderListDriver = :orderListDriver
                             WHERE username = :username""",
-                            {'username':username,'orderList':valueOrder}
+                            {'username':username,'orderListDriver':valueOrder}
                     
                     )
                 print(listOfOrders)
             with conn:
-                    c.execute("""UPDATE orders SET accepted = :accepted
+                    c.execute("""UPDATE orders SET driverAccepted = :driverAccepted
                             WHERE orderID = :orderID""",
-                            {'orderID':orderSelect,'accepted':"True"}
+                            {'orderID':selection,'driverAccepted':"True"}
                     
                     )
+    if choice == 2:
+        print("awkod")
+        username = input("Enter username: ")
+        c.execute("SELECT orderListDriver FROM driver WHERE username=:username", {"username":username})
+        orderListDriver = c.fetchone()
+        orderListDriver = list(orderListDriver)
+        # orderListDriver[0]
 
-    
+
+
+
 """The main transport company functionality is done in this function. This would
    be viewing orders for there drives(orders they have selected) and then viewing
    available orders that have been sent by cargo owners """
@@ -246,7 +254,7 @@ def mainTransportCompany():
     if choice == 2:
         count = 0
         print("Displaying orders")
-        c.execute("SELECT start,end,miles,weight,orderID FROM orders WHERE accepted=:accepted",{"accepted":"False"})
+        c.execute("SELECT start,end,miles,weight,orderID FROM orders WHERE accepted=:accepted AND driverAccepted=:driverAccepted",{"accepted":"False","driverAccepted":"False"})
         listOfOrders = c.fetchall()
         for i in listOfOrders:
             print("Order",i[4],":",i)
@@ -307,21 +315,10 @@ def main():
         main()
 
 # main()
-# mainDriver()
+mainDriver()
+# mainCargoOwner()
+# mainTransportCompany()
 
-
-c.execute("DROP TABLE orders")
-
-c.execute(""" CREATE TABLE orders (
-        start text,
-        end text,
-        miles real,
-        weight real,
-        orderID integer,
-        accepted text,
-        driverAccepted text
-    )
-    """)
 
 
 
