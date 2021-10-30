@@ -46,3 +46,4 @@ class Order():
         self.weight = weight
         self.orderID = orderID
         self.accepted = "False"
+        self.driverAccepted = "False"

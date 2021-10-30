@@ -177,7 +177,59 @@ def mainCargoOwner():
 """The main driver functionality"""
 def mainDriver():
     print("mainDriver")
+    print("""
+    1:View and accept orders
+    2:Look at accepted orders
+    """)
+    choice = int(input("Enter selection: "))
+    if choice == 1:
+        print("d")
+        company = input("What company do you work for ")
+        c.execute('SELECT orderList FROM transportCompany WHERE username=:username', {"username":company})
+        array = c.fetchall()
+        orderList = array[0]
+        orderListStr = "".join(orderList)
+        orderList = list(orderListStr)
+        for x in orderList:
+            c.execute('SELECT * FROM orders WHERE orderID=:orderID', {"orderID":x})
+            print("Order",x,c.fetchone())
+        print("""
+        Type in the order number for selection or Type Exit to leave
+        """)
+        selection = input("Enter selection: ")
+        if selection == "Exit":
+            print("Exit")
+        else:
+            print("else")
+            username = input("Enter company name: ")
+            c.execute('SELECT orderList FROM transportCompany WHERE username=:username', {"username":username})
+            listOfOrders = c.fetchone()
+            print(listOfOrders)
+            if listOfOrders == None:
+                listOfOrders = orderSelect
+                with conn:
+                    c.execute("""UPDATE transportCompany SET orderList = :orderList
+                            WHERE username = :username""",
+                            {'username':username,'orderList':listOfOrders}
+                    )
+            else:
+                print("Here")
+                valueOrder = listOfOrders[0] + str(orderSelect)
+                with conn:
+                    c.execute("""UPDATE transportCompany SET orderList = :orderList
+                            WHERE username = :username""",
+                            {'username':username,'orderList':valueOrder}
+                    
+                    )
+                print(listOfOrders)
+            with conn:
+                    c.execute("""UPDATE orders SET accepted = :accepted
+                            WHERE orderID = :orderID""",
+                            {'orderID':orderSelect,'accepted':"True"}
+                    
+                    )
 
+    
 """The main transport company functionality is done in this function. This would
    be viewing orders for there drives(orders they have selected) and then viewing
    available orders that have been sent by cargo owners """
@@ -254,12 +306,22 @@ def main():
         print("Invalid input, try again")
         main()
 
-main()
-# mainTransportCompany()
+# main()
+# mainDriver()
 
 
+c.execute("DROP TABLE orders")
 
-
+c.execute(""" CREATE TABLE orders (
+        start text,
+        end text,
+        miles real,
+        weight real,
+        orderID integer,
+        accepted text,
+        driverAccepted text
+    )
+    """)
 
 
 
