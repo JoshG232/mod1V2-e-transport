@@ -39,7 +39,9 @@ def createTables():
         miles real,
         weight real,
         orderID integer,
-        accepted text
+        accepted text,
+        driverAccepted text,
+        completed text
     )
     """)
 
@@ -115,6 +117,7 @@ def registerCargoOwner():
     c.execute('INSERT INTO cargoOwner VALUES (:username,:password,:personType)',{"username":tempObj.username,"password":tempObj.password,"personType":tempObj.personType})
     conn.commit()
     conn.close()
+    loginOrRegister()
 
 """Registering the driver with inputted data values from the
    user"""
@@ -129,6 +132,7 @@ def registerDriver():
     c.execute('INSERT INTO driver VALUES (:username,:password,:personType,:lorryDetails,:driverDetails,:company,:orderListDriver)',{"username":tempObj.username,"password":tempObj.password,"personType":tempObj.personType,"lorryDetails":tempObj.lorryDetails,"driverDetails":tempObj.driverDetails,"company":tempObj.company,"orderListDriver":tempObj.orderListDriver})
     conn.commit()
     conn.close()
+    loginOrRegister()
 
 """Registering the transport company with inputted data values from the
    user"""
@@ -140,7 +144,7 @@ def registerTransportCompany():
     c.execute('INSERT INTO transportCompany VALUES (:username,:password,:personType,:orderList)',{"username":tempObj.username,"password":tempObj.password,"personType":tempObj.personType,"orderList":tempObj.orderList})
     conn.commit()
     conn.close()
-
+    loginOrRegister()
 """The main functionality for the cargo owner is done in this function
    so calculating the shipping price and sending the cargo to a transport
    company"""
@@ -170,9 +174,10 @@ def mainCargoOwner():
         miles = int(input("How many miles: "))
         orderID = int(input("OrderID: "))
         tempObj = Order(start,end,miles,weight,orderID)
-        c.execute('INSERT INTO orders VALUES (:start,:end,:miles,:weight,:orderID,:accepted,:driverAccepted)',{"start":tempObj.start,"end":tempObj.end,"miles":tempObj.miles,"weight":tempObj.weight,"orderID":tempObj.orderID,"accepted":tempObj.accepted,"driverAccepted":tempObj.driverAccepted})
+        c.execute('INSERT INTO orders VALUES (:start,:end,:miles,:weight,:orderID,:accepted,:driverAccepted,:completed)',{"start":tempObj.start,"end":tempObj.end,"miles":tempObj.miles,"weight":tempObj.weight,"orderID":tempObj.orderID,"accepted":tempObj.accepted,"driverAccepted":tempObj.driverAccepted,"completed":tempObj.completed})
         conn.commit()
         conn.close()
+        mainCargoOwner()
 
 """The main driver functionality"""
 def mainDriver():
@@ -180,6 +185,7 @@ def mainDriver():
     print("""
     1:View and accept orders
     2:Look at accepted orders
+    3:Complete orders
     """)
     choice = int(input("Enter selection: "))
     if choice == 1:
@@ -227,17 +233,40 @@ def mainDriver():
                             {'orderID':selection,'driverAccepted':"True"}
                     
                     )
+        mainDriver()
     if choice == 2:
         print("awkod")
         username = input("Enter username: ")
         c.execute("SELECT orderListDriver FROM driver WHERE username=:username", {"username":username})
         orderListDriver = c.fetchone()
         orderListDriver = list(orderListDriver)
-        # orderListDriver[0]
-
-
-
-
+        orderListDriver = orderListDriver[0]
+        orderListDriver = list(orderListDriver)
+        print(orderListDriver)
+        for x in orderListDriver:
+            c.execute('SELECT * FROM orders WHERE orderID=:orderID', {"orderID":x})
+            selectedOrder = c.fetchone()
+            print("Order ",x,selectedOrder)
+    if choice == 3:
+        print("iopsegf")
+        username = input("Enter username: ")
+        c.execute("SELECT orderListDriver FROM driver WHERE username=:username", {"username":username})
+        orderListDriver = c.fetchone()
+        orderListDriver = list(orderListDriver)
+        orderListDriver = orderListDriver[0]
+        orderListDriver = list(orderListDriver)
+        print(orderListDriver)
+        for x in orderListDriver:
+            c.execute('SELECT * FROM orders WHERE orderID=:orderID AND completed=:completed', {"orderID":x,"completed":"False"})
+            selectedOrder = c.fetchone()
+            print("Order ",x,selectedOrder)
+        selection = input("Enter order number for completion: ")
+        with conn:
+                c.execute("""UPDATE orders SET completed = :completed
+                        WHERE orderID = :orderID""",
+                        {'orderID':selection,'completed':"True"}
+                )
+        mainDriver()
 """The main transport company functionality is done in this function. This would
    be viewing orders for there drives(orders they have selected) and then viewing
    available orders that have been sent by cargo owners """
@@ -251,6 +280,7 @@ def mainTransportCompany():
     choice = int(input("Enter selection: "))
     if choice == 1:
         print("Viewing orders")
+        mainTransportCompany()
     if choice == 2:
         count = 0
         print("Displaying orders")
@@ -261,7 +291,7 @@ def mainTransportCompany():
             count += 1
         orderSelect = int(input("Select orderID : "))
         acceptingOrder(orderSelect)
-
+        mainTransportCompany()
 """Once an order has been selected it needs to be updated in the database
    This function is where it is updated"""
 def acceptingOrder(orderSelect):
@@ -314,10 +344,11 @@ def main():
         print("Invalid input, try again")
         main()
 
-# main()
-mainDriver()
+main()
+# mainDriver()
 # mainCargoOwner()
 # mainTransportCompany()
+
 
 
 

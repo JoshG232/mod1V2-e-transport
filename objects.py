@@ -47,3 +47,4 @@ class Order():
         self.orderID = orderID
         self.accepted = "False"
         self.driverAccepted = "False"
+        self.completed = "False"
