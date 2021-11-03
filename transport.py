@@ -78,7 +78,7 @@ def login(typeChoice):
         else:
             password = input("Enter password: ")
             if password == usernameSelected[1]:
-                mainCargoOwner()
+                mainCargoOwner(usernameSelected)
             else:
                 print("Password incorrect try again")
                 login(typeChoice)
@@ -90,7 +90,7 @@ def login(typeChoice):
         else:
             password = input("Enter password: ")
             if password == usernameSelected[1]:
-                mainDriver()
+                mainDriver(usernameSelected)
             else:
                 print("Password incorrect try again")
                 login(typeChoice)
@@ -102,7 +102,7 @@ def login(typeChoice):
         else:
             password = input("Enter password: ")
             if password == usernameSelected[1]:
-                mainTransportCompany()
+                mainTransportCompany(usernameSelected)
             else:
                 print("Password incorrect try again")
                 login(typeChoice)
@@ -117,7 +117,7 @@ def registerCargoOwner():
     c.execute('INSERT INTO cargoOwner VALUES (:username,:password,:personType)',{"username":tempObj.username,"password":tempObj.password,"personType":tempObj.personType})
     conn.commit()
     conn.close()
-    loginOrRegister()
+    loginOrRegister(1)
 
 """Registering the driver with inputted data values from the
    user"""
@@ -132,7 +132,7 @@ def registerDriver():
     c.execute('INSERT INTO driver VALUES (:username,:password,:personType,:lorryDetails,:driverDetails,:company,:orderListDriver)',{"username":tempObj.username,"password":tempObj.password,"personType":tempObj.personType,"lorryDetails":tempObj.lorryDetails,"driverDetails":tempObj.driverDetails,"company":tempObj.company,"orderListDriver":tempObj.orderListDriver})
     conn.commit()
     conn.close()
-    loginOrRegister()
+    loginOrRegister(2)
 
 """Registering the transport company with inputted data values from the
    user"""
@@ -144,11 +144,12 @@ def registerTransportCompany():
     c.execute('INSERT INTO transportCompany VALUES (:username,:password,:personType,:orderList)',{"username":tempObj.username,"password":tempObj.password,"personType":tempObj.personType,"orderList":tempObj.orderList})
     conn.commit()
     conn.close()
-    loginOrRegister()
+    loginOrRegister(3)
 """The main functionality for the cargo owner is done in this function
    so calculating the shipping price and sending the cargo to a transport
    company"""
-def mainCargoOwner():
+def mainCargoOwner(user):
+
     print("mainCargoOwner")
     print("""
         What would you like to do
@@ -166,7 +167,7 @@ def mainCargoOwner():
             print("The estimate for the cargo is £",totalPrice)
         except:
             print("Incorrect values inputted")
-        mainCargoOwner()
+        mainCargoOwner(user)
     if choice == 2:
         start = input("Enter start location: ")
         end = input("Enter end location: ")
@@ -177,10 +178,10 @@ def mainCargoOwner():
         c.execute('INSERT INTO orders VALUES (:start,:end,:miles,:weight,:orderID,:accepted,:driverAccepted,:completed)',{"start":tempObj.start,"end":tempObj.end,"miles":tempObj.miles,"weight":tempObj.weight,"orderID":tempObj.orderID,"accepted":tempObj.accepted,"driverAccepted":tempObj.driverAccepted,"completed":tempObj.completed})
         conn.commit()
         conn.close()
-        mainCargoOwner()
-
+        mainCargoOwner(user)
 """The main driver functionality"""
-def mainDriver():
+
+def mainDriver(user):
     print("mainDriver")
     print("""
     1:View and accept orders
@@ -189,7 +190,7 @@ def mainDriver():
     """)
     choice = int(input("Enter selection: "))
     if choice == 1:
-        company = input("What company do you work for ")
+        company = user[5]
         c.execute('SELECT orderList FROM transportCompany WHERE username=:username', {"username":company})
         array = c.fetchall()
         orderList = array[0]
@@ -206,7 +207,7 @@ def mainDriver():
             print("Exit")
         else:
             print("else")
-            username = input("Enter username: ")
+            username = user[0]
             c.execute('SELECT orderListDriver FROM driver WHERE username=:username', {"username":username})
             listOfOrders = c.fetchone()
             print(listOfOrders)
@@ -270,7 +271,7 @@ def mainDriver():
 """The main transport company functionality is done in this function. This would
    be viewing orders for there drives(orders they have selected) and then viewing
    available orders that have been sent by cargo owners """
-def mainTransportCompany():
+def mainTransportCompany(user):
     print("mainTransportCompany")
     print("""
         1:View orders for drivers
@@ -290,13 +291,13 @@ def mainTransportCompany():
             print("Order",i[4],":",i)
             count += 1
         orderSelect = int(input("Select orderID : "))
-        acceptingOrder(orderSelect)
-        mainTransportCompany()
+        acceptingOrder(orderSelect,user)
+        mainTransportCompany(user)
 """Once an order has been selected it needs to be updated in the database
    This function is where it is updated"""
-def acceptingOrder(orderSelect):
+def acceptingOrder(orderSelect,user):  
     print("acceptingORder")
-    username = input("Enter company name: ")
+    username = user[0]
     c.execute('SELECT orderList FROM transportCompany WHERE username=:username', {"username":username})
     listOfOrders = c.fetchone()
     print(listOfOrders)
