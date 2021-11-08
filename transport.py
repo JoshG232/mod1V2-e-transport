@@ -1,8 +1,10 @@
 """Importing splite3 and creating the database"""
 import sqlite3 
-conn = sqlite3.connect("database.db")
+conn = sqlite3.connect("database.db") #Connecting the database
 c = conn.cursor() #Creating the cursor so that processes can be carried out
 
+"""The objects are being imported from another file to 
+   the help with structure and organisation"""
 from objects import CargoOwner, Driver, TransportCompany, Order
 
 """Function to create the tables for the database
@@ -32,7 +34,6 @@ def createTables():
         orderList text
     )
     """)
-    
     c.execute(""" CREATE TABLE orders (
         start text,
         end text,
@@ -149,7 +150,6 @@ def registerTransportCompany():
    so calculating the shipping price and sending the cargo to a transport
    company"""
 def mainCargoOwner(user):
-
     print("mainCargoOwner")
     print("""
         What would you like to do
@@ -167,6 +167,7 @@ def mainCargoOwner(user):
             print("The estimate for the cargo is £",totalPrice)
         except:
             print("Incorrect values inputted")
+        #Function is called again to loop back
         mainCargoOwner(user)
     if choice == 2:
         start = input("Enter start location: ")
@@ -284,7 +285,7 @@ def mainDriver(user):
         orderListDriver = list(orderListDriver)
         print(orderListDriver)
         for x in orderListDriver:
-            c.execute('SELECT * FROM orders WHERE orderID=:orderID AND completed=:completed', {"orderID":x,"completed":"False"})
+            c.execute('SELECT * FROM orders WHERE orderID=:orderID', {"orderID":x,})
             selectedOrder = c.fetchone()
             print("Order ",x,selectedOrder)
         selection = input("Enter order number for completion: ")
@@ -293,7 +294,16 @@ def mainDriver(user):
                         WHERE orderID = :orderID""",
                         {'orderID':selection,'completed':"True"}
                 )
-        mainDriver()
+        orderListDriver.remove(selection)
+        strOrderListDriver = ""
+        for x in orderListDriver:
+            strOrderListDriver += str(x)
+        with conn:
+            c.execute("""UPDATE driver SET orderListDriver= :orderListDriver
+                        WHERE username = :username""",
+                        {'username':username,'orderListDriver':strOrderListDriver}
+            )
+        mainDriver(user)
 """The main transport company functionality is done in this function. This would
    be viewing orders for there drives(orders they have selected) and then viewing
    available orders that have been sent by cargo owners """
@@ -321,6 +331,7 @@ def mainTransportCompany(user):
         mainTransportCompany(user)
 """Once an order has been selected it needs to be updated in the database
    This function is where it is updated"""
+
 def acceptingOrder(orderSelect,user):  
     print("acceptingORder")
     username = user[0]
@@ -371,7 +382,7 @@ def main():
         print("Invalid input, try again")
         main()
 
-# main()
+main()
 # mainDriver()
 # mainCargoOwner()
 # mainTransportCompany()
@@ -379,7 +390,7 @@ def main():
 
 
 
-createTables()
+# createTables()
 
 
 
