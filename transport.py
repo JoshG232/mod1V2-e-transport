@@ -155,10 +155,11 @@ def mainCargoOwner(user):
         What would you like to do
         1: Calculate shipping rates
         2: Send cargo
+        3: Check status of cargo
         """)
     choice = int(input("Enter selection: "))
     if choice == 1:
-        #Add python locaiton api to help shipping rates
+        
         try:
             length = int(input("Enter length: "))
             width = int(input("Enter width: "))
@@ -170,15 +171,35 @@ def mainCargoOwner(user):
         #Function is called again to loop back
         mainCargoOwner(user)
     if choice == 2:
+        #Getting values from user
         start = input("Enter start location: ")
         end = input("Enter end location: ")
         weight = int(input("Enter weight: "))
         miles = int(input("How many miles: "))
-        orderID = int(input("OrderID: "))
+        #Putting all the values into a list
+        x = [start,end,weight,miles]
+        #The orderID being a unique id from the list "x"(OrderID can never be the same)
+        orderID = id(x)
+        #Creating the temp object
         tempObj = Order(start,end,miles,weight,orderID)
+        #Inserting the values into the table of orders
         with conn:
             c.execute('INSERT INTO orders VALUES (:start,:end,:miles,:weight,:orderID,:accepted,:driverAccepted,:completed)',{"start":tempObj.start,"end":tempObj.end,"miles":tempObj.miles,"weight":tempObj.weight,"orderID":tempObj.orderID,"accepted":tempObj.accepted,"driverAccepted":tempObj.driverAccepted,"completed":tempObj.completed})
         
+        mainCargoOwner(user)
+    if choice == 3:
+        userOrderId = int(input("What is the orderID number? "))
+        with conn:
+            c.execute("SELECT accepted,driverAccepted,completed FROM orders WHERE orderID=:orderID",{"orderID":userOrderId})
+            order = c.fetchone()
+            #Order is being checked if values are set to true
+            #Using elif because it only checks the if's once if it is true
+            if order[2] == "True":
+                print("The order has been completed")
+            elif order[1] == "True":
+                print("Order has been accepted by the driver")
+            elif order[0] == "True":
+                print("Order has been accepted by the transport company")
         mainCargoOwner(user)
 """The main driver functionality"""
 
@@ -317,7 +338,15 @@ def mainTransportCompany(user):
     choice = int(input("Enter selection: "))
     if choice == 1:
         print("Viewing orders")
-        mainTransportCompany()
+        username = user[0]
+        with conn:
+            c.execute("SELECT username,orderListDriver FROM driver WHERE company=:company",{"company":username})
+            driverList = c.fetchall()
+            for x in driverList:
+                if x[1] == "":
+                    print("Driver",x[0],"has no orders")
+                else:
+                    print("Driver",x[0],"has orders",x[1])
     if choice == 2:
         count = 0
         print("Displaying orders")
