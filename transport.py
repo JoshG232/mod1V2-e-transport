@@ -7,6 +7,9 @@ c = conn.cursor() #Creating the cursor so that processes can be carried out
    the help with structure and organisation"""
 from objects import CargoOwner, Driver, TransportCompany, Order
 
+from geopy.geocoders import Nominatim
+
+import geopy.distance
 """Function to create the tables for the database
    if the tables have already been created the 
    the function wont be called if there is already tables """
@@ -69,13 +72,14 @@ def loginOrRegister(typeChoice):
    if it is in the database and if they make up so the user can
    continue"""
 def login(typeChoice):
-    print("Login")
+    
     username = input("Enter username: ")
     if typeChoice == 1:
         c.execute('SELECT * FROM cargoOwner WHERE username=:username', {"username":username})
         usernameSelected = c.fetchone()
         if usernameSelected == None:
             print("Username not in database please register")
+            loginOrRegister(typeChoice)
         else:
             password = input("Enter password: ")
             if password == usernameSelected[1]:
@@ -88,6 +92,7 @@ def login(typeChoice):
         usernameSelected = c.fetchone()
         if usernameSelected == None:
             print("Username not in database please register")
+            loginOrRegister(typeChoice)
         else:
             password = input("Enter password: ")
             if password == usernameSelected[1]:
@@ -100,6 +105,7 @@ def login(typeChoice):
         usernameSelected = c.fetchone()
         if usernameSelected == None:
             print("Username not in database please register")
+            loginOrRegister(typeChoice)
         else:
             password = input("Enter password: ")
             if password == usernameSelected[1]:
@@ -111,7 +117,6 @@ def login(typeChoice):
 """Registering the cargo owner with inputted data values from the
    user"""
 def registerCargoOwner():
-    print("registerCargoOwner")
     username = input("Enter username: ")
     password = input("Enter password: ")
     tempObj = CargoOwner(username,password,"Cargo Owner")
@@ -123,7 +128,7 @@ def registerCargoOwner():
 """Registering the driver with inputted data values from the
    user"""
 def registerDriver():
-    print("registerDriver")
+    
     username = input("Enter username: ")
     password = input("Enter password: ")
     lorryDetails = input("Enter lorry details: ")
@@ -138,7 +143,7 @@ def registerDriver():
 """Registering the transport company with inputted data values from the
    user"""
 def registerTransportCompany():
-    print("registerTransportCompany")
+    
     username = input("Enter username: ")
     password = input("Enter password: ")
     tempObj = TransportCompany(username,password,"Transport Company")
@@ -150,7 +155,7 @@ def registerTransportCompany():
    so calculating the shipping price and sending the cargo to a transport
    company"""
 def mainCargoOwner(user):
-    print("mainCargoOwner")
+    
     print("""
         What would you like to do
         1: Calculate shipping rates
@@ -161,10 +166,9 @@ def mainCargoOwner(user):
     if choice == 1:
         
         try:
-            length = int(input("Enter length: "))
-            width = int(input("Enter width: "))
-            weight = int(input("Enter weight: "))
-            totalPrice = length * width * weight
+            miles = int(input("Enter miles: "))
+            weight = int(input("Enter weight(kg): "))
+            totalPrice = miles * weight
             print("The estimate for the cargo is £",totalPrice)
         except:
             print("Incorrect values inputted")
@@ -172,10 +176,18 @@ def mainCargoOwner(user):
         mainCargoOwner(user)
     if choice == 2:
         #Getting values from user
-        start = input("Enter start location: ")
-        end = input("Enter end location: ")
-        weight = int(input("Enter weight: "))
-        miles = int(input("How many miles: "))
+        geolocator = Nominatim(user_agent="my_user_agent")
+        start = input("Enter start city: ")
+        end = input("Enter end city :")
+        loc1 = geolocator.geocode(start+","+"Uk")
+        loc2 = geolocator.geocode(end+","+"Uk")
+        coords1 = (loc1.latitude,loc1.longitude)
+        coords2 = (loc2.latitude,loc2.longitude)
+        weight = int(input("Enter weight(kg): "))
+        
+        miles = geopy.distance.distance(coords1, coords2).miles
+        miles = round(miles)
+
         #Putting all the values into a list
         x = [start,end,weight,miles]
         #The orderID being a unique id from the list "x"(OrderID can never be the same)
@@ -185,7 +197,7 @@ def mainCargoOwner(user):
         #Inserting the values into the table of orders
         with conn:
             c.execute('INSERT INTO orders VALUES (:start,:end,:miles,:weight,:orderID,:accepted,:driverAccepted,:completed)',{"start":tempObj.start,"end":tempObj.end,"miles":tempObj.miles,"weight":tempObj.weight,"orderID":tempObj.orderID,"accepted":tempObj.accepted,"driverAccepted":tempObj.driverAccepted,"completed":tempObj.completed})
-        
+        print("Order",orderID,"completed")
         mainCargoOwner(user)
     if choice == 3:
         userOrderId = int(input("What is the orderID number? "))
@@ -200,11 +212,13 @@ def mainCargoOwner(user):
                 print("Order has been accepted by the driver")
             elif order[0] == "True":
                 print("Order has been accepted by the transport company")
+            else:
+                print("Order hasn't been accepted")
         mainCargoOwner(user)
 """The main driver functionality"""
 
 def mainDriver(user):
-    print("mainDriver")
+    
     print("""
     1:View and accept orders
     2:Look at accepted orders
@@ -217,7 +231,8 @@ def mainDriver(user):
         array = c.fetchall()
         orderList = array[0]
         orderListStr = "".join(orderList)
-        orderList = list(orderListStr)
+        orderList = orderListStr.split(",")
+        
         for x in orderList:
             c.execute('SELECT * FROM orders WHERE orderID=:orderID AND driverAccepted=:driverAccepted', {"orderID":x,"driverAccepted":"False"})
             y = c.fetchone()
@@ -297,6 +312,7 @@ def mainDriver(user):
             c.execute('SELECT * FROM orders WHERE orderID=:orderID', {"orderID":x})
             selectedOrder = c.fetchone()
             print("Order ",x,selectedOrder)
+        mainDriver(user)
     if choice == 3:
         username = user[0]
         c.execute("SELECT orderListDriver FROM driver WHERE username=:username", {"username":username})
@@ -329,24 +345,28 @@ def mainDriver(user):
    be viewing orders for there drives(orders they have selected) and then viewing
    available orders that have been sent by cargo owners """
 def mainTransportCompany(user):
-    print("mainTransportCompany")
+    
     print("""
         1:View orders for drivers
-        2:View available orders)
+        2:View available orders
         """)
     
     choice = int(input("Enter selection: "))
     if choice == 1:
-        print("Viewing orders")
+        print("    Viewing orders")
         username = user[0]
         with conn:
             c.execute("SELECT username,orderListDriver FROM driver WHERE company=:company",{"company":username})
             driverList = c.fetchall()
-            for x in driverList:
-                if x[1] == "":
-                    print("Driver",x[0],"has no orders")
-                else:
-                    print("Driver",x[0],"has orders",x[1])
+            if driverList == []:
+                print("No orders from the drivers")
+            else:
+                for x in driverList:
+                    if x[1] == "":
+                        print("Driver",x[0],"has no orders")
+                    else:
+                        print("Driver",x[0],"has orders",x[1])
+        mainTransportCompany(user)
     if choice == 2:
         count = 0
         print("Displaying orders")
@@ -355,9 +375,14 @@ def mainTransportCompany(user):
         for i in listOfOrders:
             print("Order",i[4],":",i)
             count += 1
-        orderSelect = int(input("Select orderID : "))
-        acceptingOrder(orderSelect,user)
-        mainTransportCompany(user)
+        
+        try:
+            orderSelect = int(input("Select orderID : "))
+            acceptingOrder(orderSelect,user)
+        except:
+            mainTransportCompany(user)
+        
+        
 """Once an order has been selected it needs to be updated in the database
    This function is where it is updated"""
 
@@ -366,31 +391,33 @@ def acceptingOrder(orderSelect,user):
     username = user[0]
     c.execute('SELECT orderList FROM transportCompany WHERE username=:username', {"username":username})
     listOfOrders = c.fetchone()
-    print(listOfOrders)
-    if listOfOrders == None:
+    print(type(listOfOrders))
+    if listOfOrders[0] == []:
+        print("here")
         listOfOrders = orderSelect
-        with conn:
-            c.execute("""UPDATE transportCompany SET orderList = :orderList
-                    WHERE username = :username""",
-                    {'username':username,'orderList':listOfOrders}
-            )
+        # with conn:
+        #     c.execute("""UPDATE transportCompany SET orderList = :orderList
+        #             WHERE username = :username""",
+        #             {'username':username,'orderList':listOfOrders}
+        #     )
     else:
         print("Here")
-        valueOrder = listOfOrders[0] + str(orderSelect)
-        with conn:
-            c.execute("""UPDATE transportCompany SET orderList = :orderList
-                    WHERE username = :username""",
-                    {'username':username,'orderList':valueOrder}
+        valueOrder = listOfOrders[0] + "," + str(orderSelect)
+        print(valueOrder)
+        # with conn:
+        #     c.execute("""UPDATE transportCompany SET orderList = :orderList
+        #             WHERE username = :username""",
+        #             {'username':username,'orderList':valueOrder}
             
-            )
+        #     )
         print(listOfOrders)
-    with conn:
-            c.execute("""UPDATE orders SET accepted = :accepted
-                    WHERE orderID = :orderID""",
-                    {'orderID':orderSelect,'accepted':"True"}
+    # with conn:
+    #         c.execute("""UPDATE orders SET accepted = :accepted
+    #                 WHERE orderID = :orderID""",
+    #                 {'orderID':orderSelect,'accepted':"True"}
             
-            )
-
+    #         )
+    mainTransportCompany(user)
 """Main function to start the program and find out what type of 
    user they are"""               
 def main():
@@ -410,16 +437,22 @@ def main():
     else:
         print("Invalid input, try again")
         main()
-
+# createTables()
 main()
 # mainDriver()
 # mainCargoOwner()
 # mainTransportCompany()
 
+# c.execute("DROP TABLE transportCompany")
 
 
-
-# createTables()
+# c.execute(""" CREATE TABLE transportCompany (
+#         username text,
+#         password text,
+#         personType text,
+#         orderList text
+#     )
+#     """)
 
 
 
