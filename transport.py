@@ -255,7 +255,7 @@ def mainDriver(user):
             c.execute('SELECT orderListDriver FROM driver WHERE username=:username', {"username":username})
             listOfOrders = c.fetchone()
             print(listOfOrders)
-            if listOfOrders == None:
+            if listOfOrders[0] == "":
                 listOfOrders = selection
                 with conn:
                     c.execute("""UPDATE driver SET orderListDriver = :orderListDriver
@@ -264,7 +264,7 @@ def mainDriver(user):
                     )
             else:
                 print("Here")
-                valueOrder = listOfOrders[0] + str(selection)
+                valueOrder = listOfOrders[0] + "," + str(selection)
                 with conn:
                     c.execute("""UPDATE driver SET orderListDriver = :orderListDriver
                             WHERE username = :username""",
@@ -278,23 +278,27 @@ def mainDriver(user):
                             {'orderID':selection,'driverAccepted':"True"}
                     
                     )
-            #Updating transport company orderList
+            """Updating transport company orderList"""
             company = user[5]
             
             with conn:
                 c.execute("SELECT orderList FROM transportCompany WHERE username=:username",{"username":company})
                 orderList = c.fetchone()
                 orderList = list(orderList)
-                orderList = list(orderList[0])
-                print(orderList)
-                orderList.remove(selection)
-                strOrderList = ""
-                for x in orderList:
-                    strOrderList += str(x)
-
+                orderListStr = orderList[0]
+                orderListStr = orderListStr.split(",")
+                print(orderListStr)
+                
+                orderListStr.remove(selection)
+                print(orderListStr)
+                tempList = ""
+                for x in orderListStr:
+                    tempList = tempList + str(x) + ","
+                tempList = tempList[:-1]
+                print(tempList)
                 c.execute("""UPDATE transportCompany SET orderList= :orderList
                             WHERE username = :username""",
-                            {'username':company,'orderList':strOrderList}
+                            {'username':company,'orderList':tempList}
                     )
 
 
@@ -387,36 +391,34 @@ def mainTransportCompany(user):
    This function is where it is updated"""
 
 def acceptingOrder(orderSelect,user):  
-    print("acceptingORder")
+    
     username = user[0]
     c.execute('SELECT orderList FROM transportCompany WHERE username=:username', {"username":username})
     listOfOrders = c.fetchone()
-    print(type(listOfOrders))
-    if listOfOrders[0] == []:
+    
+    
+    if listOfOrders[0] == "":
         print("here")
         listOfOrders = orderSelect
-        # with conn:
-        #     c.execute("""UPDATE transportCompany SET orderList = :orderList
-        #             WHERE username = :username""",
-        #             {'username':username,'orderList':listOfOrders}
-        #     )
+        with conn:
+            c.execute("""UPDATE transportCompany SET orderList = :orderList
+                    WHERE username = :username""",
+                    {'username':username,'orderList':listOfOrders}
+            )
     else:
-        print("Here")
         valueOrder = listOfOrders[0] + "," + str(orderSelect)
-        print(valueOrder)
-        # with conn:
-        #     c.execute("""UPDATE transportCompany SET orderList = :orderList
-        #             WHERE username = :username""",
-        #             {'username':username,'orderList':valueOrder}
+        with conn:
+            c.execute("""UPDATE transportCompany SET orderList = :orderList
+                    WHERE username = :username""",
+                    {'username':username,'orderList':valueOrder}
             
-        #     )
-        print(listOfOrders)
-    # with conn:
-    #         c.execute("""UPDATE orders SET accepted = :accepted
-    #                 WHERE orderID = :orderID""",
-    #                 {'orderID':orderSelect,'accepted':"True"}
+            )
+    with conn:
+            c.execute("""UPDATE orders SET accepted = :accepted
+                    WHERE orderID = :orderID""",
+                    {'orderID':orderSelect,'accepted':"True"}
             
-    #         )
+            )
     mainTransportCompany(user)
 """Main function to start the program and find out what type of 
    user they are"""               
@@ -437,22 +439,19 @@ def main():
     else:
         print("Invalid input, try again")
         main()
-# createTables()
-main()
+
+
 # mainDriver()
 # mainCargoOwner()
 # mainTransportCompany()
 
 # c.execute("DROP TABLE transportCompany")
+# c.execute("DROP TABLE cargoOwner")
+# c.execute("DROP TABLE driver")
+# c.execute("DROP TABLE orders")
 
-
-# c.execute(""" CREATE TABLE transportCompany (
-#         username text,
-#         password text,
-#         personType text,
-#         orderList text
-#     )
-#     """)
+# createTables()
+# main()
 
 
 
