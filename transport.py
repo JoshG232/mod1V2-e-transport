@@ -5,14 +5,17 @@ c = conn.cursor() #Creating the cursor so that processes can be carried out
 
 """The objects are being imported from another file to 
    the help with structure and organisation"""
+
 from objects import CargoOwner, Driver, TransportCompany, Order
+"""Importing a libary of geopy so that a location can be found
+   when someone puts in a city"""
 
 from geopy.geocoders import Nominatim
-
 import geopy.distance
 """Function to create the tables for the database
    if the tables have already been created the 
    the function wont be called if there is already tables """
+
 def createTables():
     
     c.execute(""" CREATE TABLE IF NOT EXISTS cargoOwner (
@@ -120,6 +123,7 @@ def login(typeChoice):
 def registerCargoOwner():
     username = input("Enter username: ")
     password = input("Enter password: ")
+    
     tempObj = CargoOwner(username,password,"Cargo Owner")
     with conn:
      c.execute('INSERT INTO cargoOwner VALUES (:username,:password,:personType)',{"username":tempObj.username,"password":tempObj.password,"personType":tempObj.personType})
@@ -155,7 +159,10 @@ def registerTransportCompany():
 """The main functionality for the cargo owner is done in this function
    so calculating the shipping price and sending the cargo to a transport
    company"""
+
 def mainCargoOwner(user):
+    
+    cargoOwner = CargoOwner(user[0],user[1],user[2])
     
     print("""
         What would you like to do
@@ -164,38 +171,25 @@ def mainCargoOwner(user):
         3: Check status of cargo
         4: Log out
         """)
+
     choice = int(input("Enter selection: "))
     if choice == 1:
-        
-        try:
-            miles = int(input("Enter miles: "))
-            weight = int(input("Enter weight(kg): "))
-            totalPrice = miles * weight
-            print("The estimate for the cargo is £",totalPrice)
-        except:
-            print("Incorrect values inputted")
+        #Method "calShipping" is called to calculate the price of shipping
+        cargoOwner.calShipping()
+
         #Function is called again to loop back
         mainCargoOwner(user)
     if choice == 2:
         #Getting values from user
-        geolocator = Nominatim(user_agent="my_user_agent")
-        start = input("Enter start city: ")
-        end = input("Enter end city :")
-        loc1 = geolocator.geocode(start+","+"Uk")
-        loc2 = geolocator.geocode(end+","+"Uk")
-        coords1 = (loc1.latitude,loc1.longitude)
-        coords2 = (loc2.latitude,loc2.longitude)
-        weight = int(input("Enter weight(kg): "))
         
-        miles = geopy.distance.distance(coords1, coords2).miles
-        miles = round(miles)
 
         #Putting all the values into a list
-        x = [start,end,weight,miles]
+        x = cargoOwner.placeOrder()
+        print(x)
         #The orderID being a unique id from the list "x"(OrderID can never be the same)
         orderID = id(x)
         #Creating the temp object
-        tempObj = Order(start,end,miles,weight,orderID)
+        tempObj = Order(x[0],x[1],x[2],x[3],orderID)
         #Inserting the values into the table of orders
         with conn:
             c.execute('INSERT INTO orders VALUES (:start,:end,:miles,:weight,:orderID,:accepted,:driverAccepted,:completed)',{"start":tempObj.start,"end":tempObj.end,"miles":tempObj.miles,"weight":tempObj.weight,"orderID":tempObj.orderID,"accepted":tempObj.accepted,"driverAccepted":tempObj.driverAccepted,"completed":tempObj.completed})
