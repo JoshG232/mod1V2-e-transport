@@ -14,13 +14,14 @@ import geopy.distance
    if the tables have already been created the 
    the function wont be called if there is already tables """
 def createTables():
-    c.execute(""" CREATE TABLE cargoOwner (
+    
+    c.execute(""" CREATE TABLE IF NOT EXISTS cargoOwner (
         username text,
         password text,
         personType text
     )
     """)
-    c.execute(""" CREATE TABLE driver (
+    c.execute(""" CREATE TABLE IF NOT EXISTS driver (
         username text,
         password text,
         personType text,
@@ -30,14 +31,14 @@ def createTables():
         orderListDriver text
     )
     """)
-    c.execute(""" CREATE TABLE transportCompany (
+    c.execute(""" CREATE TABLE IF NOT EXISTS transportCompany (
         username text,
         password text,
         personType text,
         orderList text
     )
     """)
-    c.execute(""" CREATE TABLE orders (
+    c.execute(""" CREATE TABLE IF NOT EXISTS orders (
         start text,
         end text,
         miles real,
@@ -161,6 +162,7 @@ def mainCargoOwner(user):
         1: Calculate shipping rates
         2: Send cargo
         3: Check status of cargo
+        4: Log out
         """)
     choice = int(input("Enter selection: "))
     if choice == 1:
@@ -215,14 +217,17 @@ def mainCargoOwner(user):
             else:
                 print("Order hasn't been accepted")
         mainCargoOwner(user)
+    if choice == 4:
+        main()
 """The main driver functionality"""
 
 def mainDriver(user):
     
     print("""
-    1:View and accept orders
-    2:Look at accepted orders
-    3:Complete orders
+    1: View and accept orders
+    2: Look at accepted orders
+    3: Complete orders
+    4: Log out
     """)
     choice = int(input("Enter selection: "))
     if choice == 1:
@@ -308,23 +313,23 @@ def mainDriver(user):
         username = user[0]
         c.execute("SELECT orderListDriver FROM driver WHERE username=:username", {"username":username})
         orderListDriver = c.fetchone()
-        orderListDriver = list(orderListDriver)
         orderListDriver = orderListDriver[0]
-        orderListDriver = list(orderListDriver)
-        print(orderListDriver)
+        orderListDriverStr = "".join(orderListDriver)
+        orderListDriver = orderListDriverStr.split(",")
+        
         for x in orderListDriver:
             c.execute('SELECT * FROM orders WHERE orderID=:orderID', {"orderID":x})
             selectedOrder = c.fetchone()
             print("Order ",x,selectedOrder)
         mainDriver(user)
     if choice == 3:
+
         username = user[0]
         c.execute("SELECT orderListDriver FROM driver WHERE username=:username", {"username":username})
         orderListDriver = c.fetchone()
-        orderListDriver = list(orderListDriver)
         orderListDriver = orderListDriver[0]
-        orderListDriver = list(orderListDriver)
-        print(orderListDriver)
+        orderListDriverStr = "".join(orderListDriver)
+        orderListDriver = orderListDriverStr.split(",")
         for x in orderListDriver:
             c.execute('SELECT * FROM orders WHERE orderID=:orderID', {"orderID":x,})
             selectedOrder = c.fetchone()
@@ -345,14 +350,17 @@ def mainDriver(user):
                         {'username':username,'orderListDriver':strOrderListDriver}
             )
         mainDriver(user)
+    if choice == 4:
+        main()
 """The main transport company functionality is done in this function. This would
    be viewing orders for there drives(orders they have selected) and then viewing
    available orders that have been sent by cargo owners """
 def mainTransportCompany(user):
     
     print("""
-        1:View orders for drivers
-        2:View available orders
+        1: View orders for drivers
+        2: View available orders
+        3: Log out
         """)
     
     choice = int(input("Enter selection: "))
@@ -385,7 +393,8 @@ def mainTransportCompany(user):
             acceptingOrder(orderSelect,user)
         except:
             mainTransportCompany(user)
-        
+    if choice == 3:
+        main()
         
 """Once an order has been selected it needs to be updated in the database
    This function is where it is updated"""
@@ -398,7 +407,7 @@ def acceptingOrder(orderSelect,user):
     
     
     if listOfOrders[0] == "":
-        print("here")
+        
         listOfOrders = orderSelect
         with conn:
             c.execute("""UPDATE transportCompany SET orderList = :orderList
@@ -441,17 +450,9 @@ def main():
         main()
 
 
-# mainDriver()
-# mainCargoOwner()
-# mainTransportCompany()
 
-# c.execute("DROP TABLE transportCompany")
-# c.execute("DROP TABLE cargoOwner")
-# c.execute("DROP TABLE driver")
-# c.execute("DROP TABLE orders")
-
-# createTables()
-# main()
+createTables()
+main()
 
 
 
