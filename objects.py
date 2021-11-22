@@ -40,20 +40,32 @@ class Driver(Person):
         self.driverDetails = driverDetails
         self.company = company
         self.orderListDriver = ""
-    def viewOrders():
-        print("Temp viewOrders")
-    def acceptOrders():
-        print("Temp acceptOrders")
+    def viewAndAcceptOrders(self,orderList):
+        orderListStr = "".join(orderList)
+        orderList = orderListStr.split(",")
+        return orderList
+    def completeOrder(self,orderListDriver):
+        orderListDriver = orderListDriver[0]
+        orderListDriverStr = "".join(orderListDriver)
+        orderListDriver = orderListDriverStr.split(",")
+        return orderListDriver
 
 "Sub class of Person"      
 class TransportCompany(Person):
     def __init__(self,username,password,personType):
         super().__init__(username,password,personType)
         self.orderList = ""
-    def showCustomerOrders():
-        print("Temp showCustomerOrders")
-    def sendOrder():
-        print("Temp sendOrder")
+    def showCustomerOrders(self,driverList):
+        for x in driverList:
+            if x[1] == "":
+                print("Driver",x[0],"has no orders")
+            else:
+                print("Driver",x[0],"has orders",x[1])
+    def sendOrder(self,listOfOrders):
+        count = 0
+        for i in listOfOrders:
+                print("Order",i[4],":",i)
+                count += 1
 
 "Class for Order, this class is so orders can be created easier"
 class Order():
