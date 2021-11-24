@@ -7,17 +7,14 @@ c = conn.cursor() #Creating the cursor so that processes can be carried out
    the help with structure and organisation"""
 
 from objects import CargoOwner, Driver, TransportCompany, Order
-"""Importing a libary of geopy so that a location can be found
-   when someone puts in a city"""
 
-from geopy.geocoders import Nominatim
-import geopy.distance
+
 """Function to create the tables for the database
    if the tables have already been created the 
    the function wont be called if there is already tables """
 
 def createTables():
-    
+    #Creating the tables if they aren't already made
     c.execute(""" CREATE TABLE IF NOT EXISTS cargoOwner (
         username text,
         password text,
@@ -62,10 +59,16 @@ def loginOrRegister(typeChoice):
         2:Register
         3:Back
         """)
-    choice = int(input("Enter selection: "))
+    try:
+        choice = int(input("Enter selection: "))
+    except:
+        print("Invalid input.Try again")
+        loginOrRegister(typeChoice)
+    #checking if the user wants to login,register or exit
     if choice == 1:
         login(typeChoice)
     if choice == 2:
+        #Depending on what type of user they are will be what function runs
         if typeChoice == 1:
             registerCargoOwner()
         if typeChoice == 2:
@@ -78,42 +81,56 @@ def loginOrRegister(typeChoice):
    if it is in the database and if they make up so the user can
    continue"""
 def login(typeChoice):
-    
+    #System gets username off user
     username = input("Enter username: ")
+    #Depending on the user type it checks a different table in the database
+    
     if typeChoice == 1:
+        #Gets user from database from inputted username
         c.execute('SELECT * FROM cargoOwner WHERE username=:username', {"username":username})
         usernameSelected = c.fetchone()
+        #If the returned value is empty then the user isn't in the database
         if usernameSelected == None:
             print("Username not in database please register")
             loginOrRegister(typeChoice)
+        #If the user is in the database it asks for the password
         else:
             password = input("Enter password: ")
+            #Checks if the password is correct
             if password == usernameSelected[1]:
                 mainCargoOwner(usernameSelected)
             else:
                 print("Password incorrect try again")
                 loginOrRegister(typeChoice)
     if typeChoice == 2:
+        #Gets user from database from inputted username
         c.execute('SELECT * FROM driver WHERE username=:username', {"username":username})
         usernameSelected = c.fetchone()
+        #If the returned value is empty then the user isn't in the database
         if usernameSelected == None:
             print("Username not in database please register")
             loginOrRegister(typeChoice)
+        #If the user is in the database it asks for the password
         else:
             password = input("Enter password: ")
+            #Checks if the password is correct
             if password == usernameSelected[1]:
                 mainDriver(usernameSelected)
             else:
                 print("Password incorrect try again")
                 loginOrRegister(typeChoice)
     if typeChoice == 3:
+        #Gets user from database from inputted username
         c.execute('SELECT * FROM transportCompany WHERE username=:username', {"username":username})
         usernameSelected = c.fetchone()
+        #If the returned value is empty then the user isn't in the database
         if usernameSelected == None:
             print("Username not in database please register")
             loginOrRegister(typeChoice)
+        #If the user is in the database it asks for the password
         else:
             password = input("Enter password: ")
+            #Checks if the password is correct
             if password == usernameSelected[1]:
                 mainTransportCompany(usernameSelected)
             else:
@@ -123,12 +140,14 @@ def login(typeChoice):
 """Registering the cargo owner with inputted data values from the
    user"""
 def registerCargoOwner():
-    
+    #User enters values
     username = input("Enter username: ")
     password = input("Enter password: ")
+    #Object is created so it can be entered into database
     tempObj = CargoOwner(username,password,"Cargo Owner")
-    
+    #Connects to the database
     with conn:
+        #Inserts the cargo owner into the database
         c.execute('INSERT INTO cargoOwner VALUES (:username,:password,:personType)',{"username":tempObj.username,"password":tempObj.password,"personType":tempObj.personType})
     
     loginOrRegister(1)
@@ -136,14 +155,17 @@ def registerCargoOwner():
 """Registering the driver with inputted data values from the
    user"""
 def registerDriver():
-    
+    #User enters values
     username = input("Enter username: ")
     password = input("Enter password: ")
     lorryDetails = input("Enter lorry details: ")
     driverDetails = input("Enter driver details: ")
     company = input("Enter company name: ")
+    #Object is created so it can be entered into database
     tempObj = Driver(username,password,"Cargo Owner",lorryDetails,driverDetails,company)
+    #Connects to the database
     with conn:
+        #Inserts the driver into the database
         c.execute('INSERT INTO driver VALUES (:username,:password,:personType,:lorryDetails,:driverDetails,:company,:orderListDriver)',{"username":tempObj.username,"password":tempObj.password,"personType":tempObj.personType,"lorryDetails":tempObj.lorryDetails,"driverDetails":tempObj.driverDetails,"company":tempObj.company,"orderListDriver":tempObj.orderListDriver})
     
     loginOrRegister(2)
@@ -151,11 +173,14 @@ def registerDriver():
 """Registering the transport company with inputted data values from the
    user"""
 def registerTransportCompany():
-    
+    #User enters values
     username = input("Enter username: ")
     password = input("Enter password: ")
+    #Object is created so it can be entered into database
     tempObj = TransportCompany(username,password,"Transport Company")
+    #Connects to the database
     with conn:
+        #Inserts the driver into the database
         c.execute('INSERT INTO transportCompany VALUES (:username,:password,:personType,:orderList)',{"username":tempObj.username,"password":tempObj.password,"personType":tempObj.personType,"orderList":tempObj.orderList})
     
     loginOrRegister(3)
@@ -164,9 +189,9 @@ def registerTransportCompany():
    so calculating the shipping price and sending the cargo to a transport
    company"""
 def mainCargoOwner(user):
-    
+    #Creating the object for the user
     cargoOwner = CargoOwner(user[0],user[1],user[2])
-    
+    #Displaying menu
     print("""
         What would you like to do
         1: Calculate shipping rates
@@ -176,13 +201,14 @@ def mainCargoOwner(user):
         """)
 
     choice = int(input("Enter selection: "))
+    #Choice 1 for getting a price for shipping rates
     if choice == 1:
         #Method "calShipping" is called to calculate the price of shipping
         cargoOwner.calShipping()
 
         #Function is called again to loop back
         mainCargoOwner(user)
-
+    #Choice 2 for sending cargo off on an order
     if choice == 2:
         #Putting all the values into a list
         x = cargoOwner.placeOrder()
@@ -229,8 +255,9 @@ def mainCargoOwner(user):
 
 """The main driver functionality"""
 def mainDriver(user):
+    #Creating the object for the user
     driver = Driver(user[0],user[1],user[2],user[3],user[4],user[5])
-    #Displaying the main functions 
+    #Displaying the menu
     print("""
     1: View and accept orders
     2: Look at accepted orders
@@ -242,130 +269,149 @@ def mainDriver(user):
     except:
         print("Incorrect selection. try again")
         mainDriver(user)
+    #Choice 1 for viewing and accepting orders
     if choice == 1:
+        #Getting the company from the user object
         company = user[5]
+        #Getting the orders from the company they are with
         c.execute('SELECT orderList FROM transportCompany WHERE username=:username', {"username":company})
         array = c.fetchall()
+        #Checking if there is any orders or not
         try:
             orderList = array[0]
         except:
             print("No orders")
             mainDriver(user)
+        #calling the method for getting the orderlist ready
         driver.viewAndAcceptOrders(orderList)
-        
+        #Displaying the orders in the orderList
         for x in orderList:
+            #Selects the order
             c.execute('SELECT * FROM orders WHERE orderID=:orderID AND driverAccepted=:driverAccepted', {"orderID":x,"driverAccepted":"False"})
             y = c.fetchone()
+            #Checks if its blank or not
             if y == None:
                 pass
             else:
+                #Displays the order
                 print("Order",x,y)
         print("""
         Type in the order number for selection or Type Exit to leave
         """)
+        #Getting the user input
         selection = input("Enter selection: ")
         if selection == "Exit":
             print("Exit")
-            
-            
-
         else:
-            
+            #Getting username from user object
             username = user[0]
+            #The order list from the driver is selected
             c.execute('SELECT orderListDriver FROM driver WHERE username=:username', {"username":username})
             listOfOrders = c.fetchone()
-            
+            #Checks if the list is empty 
             if listOfOrders[0] == "":
+                #Order list is the selection made
                 listOfOrders = selection
+                #Connects to database
                 with conn:
+                    #Updates the order list for the driver
                     c.execute("""UPDATE driver SET orderListDriver = :orderListDriver
                             WHERE username = :username""",
                             {'username':username,'orderListDriver':listOfOrders}
                     )
             else:
-                
+                #Order list is updated with the selection  
                 valueOrder = listOfOrders[0] + "," + str(selection)
+                #Connects to database
                 with conn:
+                    #Updates the order list for the driver
                     c.execute("""UPDATE driver SET orderListDriver = :orderListDriver
                             WHERE username = :username""",
                             {'username':username,'orderListDriver':valueOrder}
-                    
                     )
-                
+            #Connects to database
             with conn:
+                    #Updates status of order by showing the driver has accepted it
                     c.execute("""UPDATE orders SET driverAccepted = :driverAccepted
                             WHERE orderID = :orderID""",
                             {'orderID':selection,'driverAccepted':"True"}
-                    
                     )
             """Updating transport company orderList"""
+            #Getting company that the driver works for
             company = user[5]
-            
+            #Connecting 
             with conn:
+                #Getting the order list from the transport company that the driver works for
                 c.execute("SELECT orderList FROM transportCompany WHERE username=:username",{"username":company})
                 orderList = c.fetchone()
+                #List is preped to be worked on
                 orderList = list(orderList)
                 orderListStr = orderList[0]
                 orderListStr = orderListStr.split(",")
-                print(orderListStr)
-                
+                #Selection made by the driver is removed from the list
                 orderListStr.remove(selection)
-                print(orderListStr)
+                #List is then made so it can be put back into the database
                 tempList = ""
                 for x in orderListStr:
+                    #The list needs to be in string format for it to be put in the database
                     tempList = tempList + str(x) + ","
                 tempList = tempList[:-1]
-                print(tempList)
+                #Updates the order list for the transport company
                 c.execute("""UPDATE transportCompany SET orderList= :orderList
                             WHERE username = :username""",
                             {'username':company,'orderList':tempList}
                     )
-
-
         mainDriver(user)
     if choice == 2:
-        
+        #Username is selected from user object
         username = user[0]
+        #Order list for driver is selected from database
         c.execute("SELECT orderListDriver FROM driver WHERE username=:username", {"username":username})
         orderListDriver = c.fetchone()
-
         orderListDriver = orderListDriver[0]
+        #Checking if the driver has no orders
         if orderListDriver == "":
             print("You have no orders")
             mainDriver(user)
-        
+        #Making the list ready so it can be displayed
         orderListDriverStr = "".join(orderListDriver)
         orderListDriver = orderListDriverStr.split(",")
-        
+        #Displaying all the items in the list
         for x in orderListDriver:
             c.execute('SELECT * FROM orders WHERE orderID=:orderID', {"orderID":x})
             selectedOrder = c.fetchone()
             print("Order ",x,selectedOrder)
         mainDriver(user)
     if choice == 3:
-
+        #Getting the username from the user object
         username = user[0]
+        #Getting the order list from the driver
         c.execute("SELECT orderListDriver FROM driver WHERE username=:username", {"username":username})
         orderListDriver = c.fetchone()
+        #Making the list ready so it can be displayed
         orderListDriver = orderListDriver[0]
         orderListDriverStr = "".join(orderListDriver)
         orderListDriver = orderListDriverStr.split(",")
+        #Displaying the orders
         for x in orderListDriver:
             c.execute('SELECT * FROM orders WHERE orderID=:orderID', {"orderID":x,})
             selectedOrder = c.fetchone()
             print("Order ",x,selectedOrder)
         selection = input("Enter order number for completion: ")
+        #Connects to database
         with conn:
-                c.execute("""UPDATE orders SET completed = :completed
-                        WHERE orderID = :orderID""",
-                        {'orderID':selection,'completed':"True"}
-                )
+            #Updates the order to be complete 
+            c.execute("""UPDATE orders SET completed = :completed
+                    WHERE orderID = :orderID""",
+                    {'orderID':selection,'completed':"True"}
+            )
+        #Removing the order from the order list from the driver
         try:
             orderListDriver.remove(selection)
         except:
             print("Entered value not in list")
             mainDriver(user)
-
+        #Getting the list ready for the database.
         strOrderListDriver = ""
         for x in orderListDriver:
             strOrderListDriver += str(x)

@@ -1,3 +1,6 @@
+"""Importing a libary of geopy so that a location can be found
+   when someone puts in a city"""
+
 from geopy.geocoders import Nominatim
 import geopy.distance
 "Main class"
