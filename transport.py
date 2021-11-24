@@ -5,7 +5,6 @@ c = conn.cursor() #Creating the cursor so that processes can be carried out
 
 """The objects are being imported from another file to 
    the help with structure and organisation"""
-
 from objects import CargoOwner, Driver, TransportCompany, Order
 
 
@@ -77,6 +76,7 @@ def loginOrRegister(typeChoice):
             registerTransportCompany()
     if choice == 3:
         main()
+
 """The user is asked for the username and password and checked
    if it is in the database and if they make up so the user can
    continue"""
@@ -428,12 +428,15 @@ def mainDriver(user):
    be viewing orders for there drives(orders they have selected) and then viewing
    available orders that have been sent by cargo owners """
 def mainTransportCompany(user):
+    #Creating object for transport company 
     transportCompany = TransportCompany(user[0],user[1],user[2])
+    #Displaying menu 
     print("""
         1: View orders for drivers
         2: View available orders
         3: Log out
         """)
+    #Getting selection from user
     try:
         choice = int(input("Enter selection: "))
     except:
@@ -441,21 +444,30 @@ def mainTransportCompany(user):
         mainTransportCompany(user)
     if choice == 1:
         print("    Viewing orders")
+        #Username from user object
         username = user[0]
+        #Connecting to database
         with conn:
+            #Selecting all the drivers but only there username and order list
             c.execute("SELECT username,orderListDriver FROM driver WHERE company=:company",{"company":username})
             driverList = c.fetchall()
-            transportCompany.showCustomerOrders(driverList)
+            #Method for showing the drivers orders
+            transportCompany.showDriverOrders(driverList)
         mainTransportCompany(user)
     if choice == 2:
+
         print("Displaying orders")
+        #Getting all the orders that cargo owners have sent out
         c.execute("SELECT start,end,miles,weight,orderID FROM orders WHERE accepted=:accepted AND driverAccepted=:driverAccepted",{"accepted":"False","driverAccepted":"False"})
         listOfOrders = c.fetchall()
-        transportCompany.sendOrder(listOfOrders)
+        #Method for displaying the orders
+        transportCompany.displayOrder(listOfOrders)
+        #Selcting the order that the transport company wants
         try:
             orderSelect = int(input("Select orderID : "))
             acceptingOrder(orderSelect,user)
         except:
+            print("Invalid input")
             mainTransportCompany(user)
     if choice == 3:
         main()
@@ -464,38 +476,45 @@ def mainTransportCompany(user):
    This function is where it is updated"""
 
 def acceptingOrder(orderSelect,user):  
-    
+    #Username from user object
     username = user[0]
+    #Getting the order list from the transport company
     c.execute('SELECT orderList FROM transportCompany WHERE username=:username', {"username":username})
     listOfOrders = c.fetchone()
-    
-    
+    #Checking if the list is empty or not
     if listOfOrders[0] == "":
-        
         listOfOrders = orderSelect
+        #Connecting to database
         with conn:
+            #Updating the list with the selected order
             c.execute("""UPDATE transportCompany SET orderList = :orderList
                     WHERE username = :username""",
                     {'username':username,'orderList':listOfOrders}
             )
     else:
+        #Add the selected orderID to the list when there are already values
         valueOrder = listOfOrders[0] + "," + str(orderSelect)
+        #Conncting to database
         with conn:
+            #Updating the list with the seleced order list
             c.execute("""UPDATE transportCompany SET orderList = :orderList
                     WHERE username = :username""",
                     {'username':username,'orderList':valueOrder}
             
             )
+    
     with conn:
-            c.execute("""UPDATE orders SET accepted = :accepted
-                    WHERE orderID = :orderID""",
-                    {'orderID':orderSelect,'accepted':"True"}
-            
-            )
+        #Updating the "accepted" value in the table so the cargo knows the status
+        c.execute("""UPDATE orders SET accepted = :accepted
+                WHERE orderID = :orderID""",
+                {'orderID':orderSelect,'accepted':"True"}
+        
+        )
     mainTransportCompany(user)
 """Main function to start the program and find out what type of 
    user they are"""               
 def main():
+    #Displaying menu
     print("""
         Select type of user
         1:Cargo Owner
@@ -503,22 +522,27 @@ def main():
         3:Transport Company
         4:Exit
         """)
-    typeChoice = int(input("Enter selection: "))
+    #Getting valid input for selection
+    try:
+        typeChoice = int(input("Enter selection: "))
+    except:
+        print("Invalid input try again")
+        main()
     if typeChoice == 1:
+            loginOrRegister(typeChoice)
+    if typeChoice == 2:
         loginOrRegister(typeChoice)
-    elif typeChoice == 2:
+    if typeChoice == 3:
         loginOrRegister(typeChoice)
-    elif typeChoice == 3:
-        loginOrRegister(typeChoice)
-    elif typeChoice == 4:
-        exit()
-        
+    if typeChoice == 4:
+        exit()  
     else:
-        print("Invalid input, try again")
+        print("Invalid input try again")
         main()
 
 
 
+#Runing the main function and creating the tables if needed
 createTables()
 main()
 
