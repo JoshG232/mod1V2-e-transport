@@ -174,7 +174,7 @@ def registerDriver():
    user"""
 def registerTransportCompany():
     #User enters values
-    username = input("Enter username: ")
+    username = input("Enter company name: ")
     password = input("Enter password: ")
     #Object is created so it can be entered into database
     tempObj = TransportCompany(username,password,"Transport Company")
@@ -276,15 +276,18 @@ def mainDriver(user):
         #Getting the orders from the company they are with
         c.execute('SELECT orderList FROM transportCompany WHERE username=:username', {"username":company})
         array = c.fetchall()
+        
         #Checking if there is any orders or not
         try:
             orderList = array[0]
         except:
             print("No orders")
             mainDriver(user)
+        
         #calling the method for getting the orderlist ready
-        driver.viewAndAcceptOrders(orderList)
+        orderList = driver.viewAndAcceptOrders(orderList)
         #Displaying the orders in the orderList
+        print(orderList)
         for x in orderList:
             #Selects the order
             c.execute('SELECT * FROM orders WHERE orderID=:orderID AND driverAccepted=:driverAccepted', {"orderID":x,"driverAccepted":"False"})
@@ -294,7 +297,7 @@ def mainDriver(user):
                 pass
             else:
                 #Displays the order
-                print("Order",x,y)
+                print("Order",x,", Start city:",y[0],", End city:",y[1],", Distance(miles):",y[2],", Weight(kg):",y[3])
         print("""
         Type in the order number for selection or Type Exit to leave
         """)
@@ -379,8 +382,8 @@ def mainDriver(user):
         #Displaying all the items in the list
         for x in orderListDriver:
             c.execute('SELECT * FROM orders WHERE orderID=:orderID', {"orderID":x})
-            selectedOrder = c.fetchone()
-            print("Order ",x,selectedOrder)
+            y= c.fetchone()
+            print("Order",x,", Start city:",y[0],", End city:",y[1],", Distance(miles):",y[2],", Weight(kg):",y[3])
         mainDriver(user)
     if choice == 3:
         #Getting the username from the user object
@@ -393,11 +396,14 @@ def mainDriver(user):
         orderListDriverStr = "".join(orderListDriver)
         orderListDriver = orderListDriverStr.split(",")
         #Displaying the orders
-        for x in orderListDriver:
-            c.execute('SELECT * FROM orders WHERE orderID=:orderID', {"orderID":x,})
-            selectedOrder = c.fetchone()
-            print("Order ",x,selectedOrder)
-        selection = input("Enter order number for completion: ")
+        try:
+            for x in orderListDriver:
+                c.execute('SELECT * FROM orders WHERE orderID=:orderID', {"orderID":x,})
+                y = c.fetchone()
+                print("Order",x,", Start city:",y[0],", End city:",y[1],", Distance(miles):",y[2],", Weight(kg):",y[3])
+            selection = input("Enter order number for completion: ")
+        except:
+            print("No orders to complete")
         #Connects to database
         with conn:
             #Updates the order to be complete 
@@ -415,6 +421,7 @@ def mainDriver(user):
         strOrderListDriver = ""
         for x in orderListDriver:
             strOrderListDriver += str(x)
+        strOrderListDriver = strOrderListDriver[:-1]
         with conn:
             c.execute("""UPDATE driver SET orderListDriver= :orderListDriver
                         WHERE username = :username""",
@@ -481,7 +488,8 @@ def acceptingOrder(orderSelect,user):
     #Getting the order list from the transport company
     c.execute('SELECT orderList FROM transportCompany WHERE username=:username', {"username":username})
     listOfOrders = c.fetchone()
-    #Checking if the list is empty or not
+    
+    # Checking if the list is empty or not
     if listOfOrders[0] == "":
         listOfOrders = orderSelect
         #Connecting to database
@@ -545,9 +553,6 @@ def main():
 #Runing the main function and creating the tables if needed
 createTables()
 main()
-
-
-
 
 
 

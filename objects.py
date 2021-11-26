@@ -15,6 +15,7 @@ class Person:
 class CargoOwner(Person):
     #CargoOwner class is the super class of Person
     def __init_subclass__(self):
+        
         return super().__init_subclass__()
     """placeOrder method for CargoOwner"""
     def placeOrder(self):
@@ -22,7 +23,7 @@ class CargoOwner(Person):
         geolocator = Nominatim(user_agent="etransport")
         #user enters start and end location
         start = input("Enter start city: ")
-        end = input("Enter end city :")
+        end = input("Enter end city : ")
         #loc1 and loc2 are the postion of the city 
         loc1 = geolocator.geocode(start+","+"Uk")
         loc2 = geolocator.geocode(end+","+"Uk")
@@ -93,7 +94,7 @@ class TransportCompany(Person):
     def displayOrder(self,listOfOrders):
         #Displaying all the orders in the list
         for i in listOfOrders:
-                print("Order",i[4],":",i)
+                print("Order",i[4],", Start city:",i[0],", End city:",i[1],", Distance(miles):",i[2],", Weight(kg):",i[3])
                 
 "Class for Order, this class is so orders can be created easier"
 class Order():
